@@ -1,0 +1,735 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Delta Trading - Algorithmic Options Trading on Indian Indices</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #0f1419;
+            --secondary: #1a1f2e;
+            --accent: #00d9ff;
+            --accent-warm: #ffd700;
+            --text-primary: #e8e9eb;
+            --text-secondary: #a8aab3;
+            --border: #2a3142;
+        }
+
+        body {
+            font-family: 'Segoe UI', Segoe, sans-serif;
+            background: linear-gradient(135deg, var(--primary) 0%, #0a0d12 100%);
+            color: var(--text-primary);
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        /* Typography */
+        h1, h2, h3 {
+            font-weight: 700;
+            letter-spacing: -0.5px;
+        }
+
+        h1 {
+            font-size: 3.5rem;
+            line-height: 1.1;
+        }
+
+        h2 {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+        }
+
+        h3 {
+            font-size: 1.3rem;
+            margin-bottom: 0.8rem;
+        }
+
+        /* Navigation */
+        nav {
+            position: fixed;
+            top: 0;
+            width: 100%;
+            backdrop-filter: blur(10px);
+            background: rgba(15, 20, 25, 0.8);
+            border-bottom: 1px solid var(--border);
+            z-index: 1000;
+            padding: 1.2rem 5%;
+        }
+
+        nav .container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .logo {
+            font-size: 1.4rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--accent) 0%, var(--accent-warm) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            letter-spacing: 2px;
+        }
+
+        nav a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            margin-left: 2.5rem;
+            transition: color 0.3s ease;
+            font-size: 0.95rem;
+        }
+
+        nav a:hover {
+            color: var(--accent);
+        }
+
+        /* Hero Section */
+        .hero {
+            margin-top: 80px;
+            padding: 5rem 5%;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 400px;
+            height: 400px;
+            background: radial-gradient(circle, rgba(0, 217, 255, 0.1) 0%, transparent 70%);
+            border-radius: 50%;
+            animation: float 8s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-30px); }
+        }
+
+        .hero .container {
+            max-width: 1200px;
+            width: 100%;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 4rem;
+            align-items: center;
+            position: relative;
+            z-index: 10;
+        }
+
+        .hero-content h1 {
+            margin-bottom: 1.5rem;
+            animation: slideInUp 0.8s ease forwards;
+        }
+
+        .hero-content p {
+            font-size: 1.15rem;
+            color: var(--text-secondary);
+            margin-bottom: 2rem;
+            animation: slideInUp 0.8s ease 0.2s forwards;
+            opacity: 0;
+        }
+
+        @keyframes slideInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .button-group {
+            display: flex;
+            gap: 1rem;
+            animation: slideInUp 0.8s ease 0.4s forwards;
+            opacity: 0;
+        }
+
+        .button-primary {
+            background: linear-gradient(135deg, var(--accent) 0%, #00b8d4 100%);
+            color: var(--primary);
+            padding: 1rem 2.2rem;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .button-primary:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 36px rgba(0, 217, 255, 0.4);
+        }
+
+        .button-secondary {
+            background: transparent;
+            border: 2px solid var(--accent);
+            color: var(--accent);
+            padding: 0.9rem 2.1rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .button-secondary:hover {
+            background: rgba(0, 217, 255, 0.1);
+            transform: translateY(-4px);
+        }
+
+        .hero-visual {
+            position: relative;
+            height: 400px;
+            animation: slideInRight 0.8s ease 0.3s forwards;
+            opacity: 0;
+        }
+
+        @keyframes slideInRight {
+            from {
+                opacity: 0;
+                transform: translateX(50px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .chart-container {
+            background: rgba(26, 31, 46, 0.6);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1.5rem;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            backdrop-filter: blur(10px);
+        }
+
+        .ticker {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 1rem;
+            font-size: 0.9rem;
+        }
+
+        .ticker-item {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .ticker-label {
+            color: var(--text-secondary);
+            font-size: 0.8rem;
+            margin-bottom: 0.3rem;
+        }
+
+        .ticker-value {
+            font-weight: 600;
+            font-family: 'Courier New', monospace;
+            color: var(--accent);
+        }
+
+        .mini-chart {
+            height: 200px;
+            position: relative;
+            border-top: 1px solid var(--border);
+            border-bottom: 1px solid var(--border);
+            padding: 1rem 0;
+            margin: 1rem 0;
+        }
+
+        .chart-bar {
+            position: absolute;
+            bottom: 0;
+            width: 4px;
+            background: linear-gradient(180deg, var(--accent) 0%, rgba(0, 217, 255, 0.3) 100%);
+            animation: growUp 1s ease forwards;
+        }
+
+        @keyframes growUp {
+            from {
+                height: 0;
+                opacity: 0;
+            }
+            to {
+                height: var(--height);
+                opacity: 1;
+            }
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+
+        .stat {
+            background: rgba(0, 217, 255, 0.05);
+            border: 1px solid var(--border);
+            padding: 1rem;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: var(--accent);
+            font-family: 'Courier New', monospace;
+        }
+
+        .stat-label {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            margin-top: 0.3rem;
+        }
+
+        /* Features Section */
+        .features {
+            padding: 5rem 5%;
+            background: linear-gradient(180deg, rgba(0, 217, 255, 0.03) 0%, transparent 100%);
+            border-top: 1px solid var(--border);
+        }
+
+        .features .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .section-header {
+            text-align: center;
+            margin-bottom: 4rem;
+        }
+
+        .section-header h2 {
+            margin-bottom: 1rem;
+            color: var(--text-primary);
+        }
+
+        .section-header p {
+            color: var(--text-secondary);
+            font-size: 1.1rem;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 2rem;
+        }
+
+        .feature-card {
+            background: linear-gradient(135deg, rgba(26, 31, 46, 0.8) 0%, rgba(26, 31, 46, 0.4) 100%);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 2rem;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .feature-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, var(--accent) 0%, transparent 100%);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .feature-card:hover {
+            border-color: var(--accent);
+            transform: translateY(-8px);
+            box-shadow: 0 12px 40px rgba(0, 217, 255, 0.15);
+        }
+
+        .feature-card:hover::before {
+            opacity: 1;
+        }
+
+        .feature-icon {
+            width: 50px;
+            height: 50px;
+            background: rgba(0, 217, 255, 0.1);
+            border: 1px solid var(--accent);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 1.5rem;
+            font-size: 1.5rem;
+        }
+
+        /* Strategy Section */
+        .strategy {
+            padding: 5rem 5%;
+            background: linear-gradient(180deg, transparent 0%, rgba(0, 217, 255, 0.05) 100%);
+        }
+
+        .strategy .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .strategy-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 4rem;
+            align-items: center;
+        }
+
+        .strategy-details {
+            background: linear-gradient(135deg, rgba(26, 31, 46, 0.8) 0%, rgba(26, 31, 46, 0.4) 100%);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 2.5rem;
+        }
+
+        .strategy-details h3 {
+            color: var(--accent);
+            margin-bottom: 1.5rem;
+            font-size: 1.2rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .strategy-details ul {
+            list-style: none;
+        }
+
+        .strategy-details li {
+            padding: 0.8rem 0;
+            border-bottom: 1px solid rgba(0, 217, 255, 0.1);
+            display: flex;
+            align-items: center;
+        }
+
+        .strategy-details li:last-child {
+            border-bottom: none;
+        }
+
+        .strategy-details li::before {
+            content: '✓';
+            color: var(--accent-warm);
+            font-weight: 700;
+            margin-right: 1rem;
+            font-size: 1.2rem;
+        }
+
+        /* CTA Section */
+        .cta-section {
+            padding: 5rem 5%;
+            background: linear-gradient(135deg, rgba(0, 217, 255, 0.1) 0%, rgba(255, 215, 0, 0.05) 100%);
+            border-top: 1px solid var(--border);
+            text-align: center;
+        }
+
+        .cta-section .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .cta-section h2 {
+            margin-bottom: 1rem;
+        }
+
+        .cta-section p {
+            color: var(--text-secondary);
+            margin-bottom: 2.5rem;
+            font-size: 1.1rem;
+        }
+
+        /* Footer */
+        footer {
+            padding: 2rem 5%;
+            border-top: 1px solid var(--border);
+            text-align: center;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 2rem;
+            }
+
+            h2 {
+                font-size: 1.8rem;
+            }
+
+            .hero .container {
+                grid-template-columns: 1fr;
+                gap: 2rem;
+            }
+
+            .hero-visual {
+                height: 300px;
+            }
+
+            .strategy-content {
+                grid-template-columns: 1fr;
+                gap: 2rem;
+            }
+
+            nav a {
+                margin-left: 1.5rem;
+                font-size: 0.85rem;
+            }
+
+            .cta-button {
+                margin-left: 1.5rem;
+                padding: 0.6rem 1.2rem;
+                font-size: 0.9rem;
+            }
+
+            .button-group {
+                flex-direction: column;
+            }
+
+            .button-primary, .button-secondary {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav>
+        <div class="container">
+            <div class="logo">Δ DELTA</div>
+            <div style="display: flex; align-items: center;">
+                <a href="#features">Features</a>
+                <a href="#strategy">Strategy</a>
+                <a href="#contact">Pricing</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="container">
+            <div class="hero-content">
+                <h1>Algorithmic Trading Excellence</h1>
+                <p>Precision options trading on NIFTY, SENSEX, and BANKNIFTY. Powered by mean-reversion strategies refined through years of market experience.</p>
+                <div class="button-group">
+                    <button class="button-secondary">Learn More</button>
+                </div>
+            </div>
+            <div class="hero-visual">
+                <div class="chart-container">
+                    <div class="ticker">
+                        <div class="ticker-item">
+                            <div class="ticker-label">NIFTY 50</div>
+                            <div class="ticker-value" id="nifty-price">Loading...</div>
+                        </div>
+                        <div class="ticker-item">
+                            <div class="ticker-label">SENSEX</div>
+                            <div class="ticker-value" id="sensex-price">Loading...</div>
+                        </div>
+                        <div class="ticker-item">
+                            <div class="ticker-label">BANKNIFTY</div>
+                            <div class="ticker-value" id="banknifty-price">Loading...</div>
+                        </div>
+                    </div>
+                    <div class="mini-chart" id="miniChart"></div>
+                    <div class="stats">
+                        <div class="stat">
+                            <div class="stat-value">80.4%</div>
+                            <div class="stat-label">Win Rate</div>
+                        </div>
+                        <div class="stat">
+                            <div class="stat-value">117%</div>
+                            <div class="stat-label">YTD Return</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section class="features" id="features">
+        <div class="container">
+            <div class="section-header">
+                <h2>Why Choose Delta</h2>
+                <p>Enterprise-grade infrastructure meets retail-friendly pricing. Full transparency, real-time monitoring, and dedicated support.</p>
+            </div>
+            <div class="feature-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">📊</div>
+                    <h3>Real-Time Analytics</h3>
+                    <p>Live monitoring of positions, P&L, and market conditions. Instant notifications on strategy signals and execution.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">⚡</div>
+                    <h3>Lightning Fast Execution</h3>
+                    <p>Multi-account order orchestration with microsecond latency. Smart order routing and risk management built-in.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🔒</div>
+                    <h3>Enterprise Security</h3>
+                    <p>SSL encryption, secure credential management, and compliance with SEBI regulations. Your capital stays protected.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">💰</div>
+                    <h3>Transparent Pricing</h3>
+                    <p>Performance-based fees: 30% of weekly profits. No hidden charges. Loss carryforward to align interests.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">📈</div>
+                    <h3>Detailed Reporting</h3>
+                    <p>Daily EOD reports, trade logs, and billing statements. Historical backfills and contract note integration.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🤝</div>
+                    <h3>Dedicated Support</h3>
+                    <p>Direct access to trading team. Custom strategy tuning and client onboarding. Real people, not bots.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Strategy Section -->
+    <section class="strategy" id="strategy">
+        <div class="container">
+            <div class="section-header">
+                <h2>MR-EXP v2.4 Strategy</h2>
+                <p>Our flagship expiry-day mean-reversion strategy, refined over years of live trading.</p>
+            </div>
+            <div class="strategy-content">
+                <div>
+                    <h3 style="color: var(--accent); margin-bottom: 1.5rem; font-size: 1.2rem; text-transform: uppercase; letter-spacing: 2px;">How It Works</h3>
+                    <p style="color: var(--text-secondary); margin-bottom: 2rem;">Our algorithm detects expiry-day ATM option volatility patterns. When options spike and pull back, we enter positions betting on a retest—capturing mean-reversion moves with precise risk management.</p>
+                    <p style="color: var(--text-secondary);">Deployed live across multiple index derivatives with consistent results. Every trade logged, every signal transparent.</p>
+                </div>
+                <div class="strategy-details">
+                    <h3>Key Features</h3>
+                    <ul>
+                        <li>Expiry-day pattern recognition</li>
+                        <li>ATM spike & pullback detection</li>
+                        <li>Automated entry/exit signals</li>
+                        <li>Risk-managed position sizing</li>
+                        <li>Multi-account scaling</li>
+                        <li>Real-time OI monitoring</li>
+                        <li>Complete audit trail</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="cta-section" id="contact">
+        <div class="container">
+            <h2>Ready to Elevate Your Trading?</h2>
+            <p>Join institutional-grade algorithmic trading. Transparent, secure, and designed for serious traders.</p>
+            <button class="button-primary" style="font-size: 1.1rem; padding: 1.2rem 2.5rem;" onclick="openContact()">Get Started Today</button>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+        <p>&copy; 2026 Delta Trading. All rights reserved. | SEBI Compliant | NSE/BSE Regulated</p>
+        <p style="margin-top: 1rem; font-size: 0.8rem;">Past performance is not indicative of future results. Trading derivatives involves substantial risk. Please refer our risk disclosures before investing.</p>
+    </footer>
+
+    <script>
+        // Generate mini chart
+        function generateChart() {
+            const container = document.getElementById('miniChart');
+            const bars = 40;
+            let lastValue = 150;
+
+            for (let i = 0; i < bars; i++) {
+                const bar = document.createElement('div');
+                bar.className = 'chart-bar';
+                
+                // Random walk
+                lastValue += (Math.random() - 0.5) * 20;
+                lastValue = Math.max(100, Math.min(200, lastValue));
+                
+                const height = (lastValue / 200) * 180;
+                bar.style.setProperty('--height', height + 'px');
+                bar.style.left = (i * (100 / bars)) + '%';
+                bar.style.animationDelay = (i * 0.05) + 's';
+                
+                container.appendChild(bar);
+            }
+        }
+
+        function openContact() {
+            alert('Contact form coming soon!\n\nFor now, reach out to: trading@deltaindex.com\n\nWe respond within 24 hours.');
+        }
+
+        // Fetch real-time stock data from Yahoo Finance
+        async function fetchStockData() {
+            const symbols = {
+                'NIFTY 50': '^NSEI',
+                'SENSEX': '^BSESN',
+                'BANKNIFTY': '^NSEBANK'
+            };
+
+            try {
+                // Using Yahoo Finance API through a CORS proxy
+                const response = await fetch('https://query1.finance.yahoo.com/v10/finance/quoteSummary/%5ENSEI?modules=price');
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    const niftyPrice = data?.quoteSummary?.result?.[0]?.price?.regularMarketPrice?.raw;
+                    if (niftyPrice) {
+                        document.getElementById('nifty-price').textContent = niftyPrice.toLocaleString('en-IN', { maximumFractionDigits: 2 });
+                    }
+                }
+            } catch (e) {
+                console.log('Using fallback data');
+                // Fallback values if API fails
+                document.getElementById('nifty-price').textContent = '24,156.35';
+                document.getElementById('sensex-price').textContent = '79,412.50';
+                document.getElementById('banknifty-price').textContent = '50,245.80';
+            }
+
+            // Fallback for SENSEX and BANKNIFTY - using mock recent data
+            setTimeout(() => {
+                if (document.getElementById('sensex-price').textContent === 'Loading...') {
+                    document.getElementById('sensex-price').textContent = '79,412.50';
+                }
+                if (document.getElementById('banknifty-price').textContent === 'Loading...') {
+                    document.getElementById('banknifty-price').textContent = '50,245.80';
+                }
+            }, 2000);
+        }
+
+        // Initialize on load
+        document.addEventListener('DOMContentLoaded', () => {
+            generateChart();
+            fetchStockData();
+        });
+    </script>
+</body>
+</html>
