@@ -1,0 +1,1108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MR-EXP v2.4 Algorithm - Cross-Chain Order Flow Trading</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #0f1419;
+            --secondary: #1a1f2e;
+            --accent: #00d9ff;
+            --accent-warm: #ffd700;
+            --success: #00d977;
+            --warning: #ff6b6b;
+            --text-primary: #e8e9eb;
+            --text-secondary: #a8aab3;
+            --border: #2a3142;
+            --code-bg: #0d0f14;
+        }
+
+        body {
+            font-family: 'Segoe UI', Segoe, sans-serif;
+            background: linear-gradient(135deg, var(--primary) 0%, #0a0d12 100%);
+            color: var(--text-primary);
+            line-height: 1.7;
+        }
+
+        /* Navigation */
+        nav {
+            position: fixed;
+            top: 0;
+            width: 100%;
+            backdrop-filter: blur(10px);
+            background: rgba(15, 20, 25, 0.95);
+            border-bottom: 1px solid var(--border);
+            z-index: 1000;
+            padding: 1.2rem 5%;
+        }
+
+        nav .container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .logo {
+            font-size: 1.4rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--accent) 0%, var(--accent-warm) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            letter-spacing: 2px;
+            text-decoration: none;
+        }
+
+        nav a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            margin-left: 2rem;
+            transition: color 0.3s ease;
+            font-size: 0.95rem;
+        }
+
+        nav a:hover {
+            color: var(--accent);
+        }
+
+        /* Hero Section */
+        .hero {
+            margin-top: 80px;
+            padding: 5rem 5%;
+            background: linear-gradient(180deg, rgba(0, 217, 255, 0.05) 0%, transparent 100%);
+            border-bottom: 1px solid var(--border);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -20%;
+            width: 600px;
+            height: 600px;
+            background: radial-gradient(circle, rgba(0, 217, 255, 0.15) 0%, transparent 70%);
+            border-radius: 50%;
+        }
+
+        .hero .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            position: relative;
+            z-index: 10;
+        }
+
+        .hero h1 {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+
+        .hero .subtitle {
+            font-size: 1.3rem;
+            color: var(--text-secondary);
+            margin-bottom: 3rem;
+        }
+
+        .hero-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 2rem;
+            margin-top: 3rem;
+        }
+
+        .stat-box {
+            background: rgba(26, 31, 46, 0.6);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 2rem;
+            backdrop-filter: blur(10px);
+        }
+
+        .stat-value {
+            font-size: 2.2rem;
+            font-weight: 800;
+            color: var(--accent);
+            margin-bottom: 0.5rem;
+            font-family: 'Courier New', monospace;
+        }
+
+        .stat-label {
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        /* Content Sections */
+        .content-section {
+            padding: 4rem 5%;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .content-section .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .section-title {
+            font-size: 2.2rem;
+            margin-bottom: 1rem;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .section-icon {
+            font-size: 2.5rem;
+            opacity: 0.7;
+        }
+
+        .section-subtitle {
+            color: var(--text-secondary);
+            font-size: 1.1rem;
+            margin-bottom: 2rem;
+        }
+
+        /* Two Column Layout */
+        .two-col {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 3rem;
+            align-items: start;
+        }
+
+        /* Cards */
+        .card-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 2rem;
+            margin: 2rem 0;
+        }
+
+        .card {
+            background: linear-gradient(135deg, rgba(26, 31, 46, 0.8) 0%, rgba(26, 31, 46, 0.4) 100%);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 2rem;
+            transition: all 0.3s ease;
+        }
+
+        .card:hover {
+            border-color: var(--accent);
+            transform: translateY(-4px);
+            box-shadow: 0 8px 24px rgba(0, 217, 255, 0.1);
+        }
+
+        .card-title {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--accent);
+            margin-bottom: 1rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .card-content {
+            font-size: 0.95rem;
+            color: var(--text-secondary);
+            line-height: 1.8;
+        }
+
+        .card-value {
+            color: var(--accent-warm);
+            font-weight: 600;
+            font-family: 'Courier New', monospace;
+        }
+
+        /* Callout */
+        .callout {
+            background: linear-gradient(135deg, rgba(0, 217, 255, 0.1) 0%, rgba(0, 217, 255, 0.05) 100%);
+            border-left: 4px solid var(--accent);
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin: 2rem 0;
+        }
+
+        .callout.warning {
+            border-left-color: var(--warning);
+            background: linear-gradient(135deg, rgba(255, 107, 107, 0.1) 0%, rgba(255, 107, 107, 0.05) 100%);
+        }
+
+        .callout-title {
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            color: var(--text-primary);
+        }
+
+        /* Table */
+        .comparison-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 2rem 0;
+            background: rgba(26, 31, 46, 0.3);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .comparison-table th {
+            background: rgba(0, 217, 255, 0.1);
+            border-bottom: 2px solid var(--border);
+            padding: 1.2rem;
+            text-align: left;
+            font-weight: 700;
+            color: var(--accent);
+        }
+
+        .comparison-table td {
+            padding: 1.2rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .comparison-table tr:hover {
+            background: rgba(0, 217, 255, 0.05);
+        }
+
+        /* Code Block */
+        .code-block {
+            background: var(--code-bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 1.5rem;
+            overflow-x: auto;
+            margin: 1.5rem 0;
+            font-family: 'Courier New', monospace;
+            font-size: 0.85rem;
+            color: var(--accent);
+            line-height: 1.6;
+        }
+
+        /* Process Flow */
+        .process-flow {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 1.5rem;
+            margin: 2rem 0;
+        }
+
+        .process-step {
+            background: linear-gradient(135deg, rgba(26, 31, 46, 0.8) 0%, rgba(26, 31, 46, 0.4) 100%);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 2rem;
+            position: relative;
+            text-align: center;
+        }
+
+        .process-step::before {
+            content: attr(data-step);
+            position: absolute;
+            top: -15px;
+            left: 20px;
+            background: var(--accent);
+            color: var(--primary);
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 0.9rem;
+        }
+
+        .process-step h4 {
+            color: var(--accent);
+            margin-top: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .process-step p {
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+        }
+
+        /* Metrics Grid */
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+            margin: 2rem 0;
+        }
+
+        .metric {
+            background: rgba(26, 31, 46, 0.5);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 1.5rem;
+            text-align: center;
+        }
+
+        .metric-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--success);
+            font-family: 'Courier New', monospace;
+            margin-bottom: 0.5rem;
+        }
+
+        .metric-label {
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        h3 {
+            margin: 2rem 0 1rem 0;
+            color: var(--text-primary);
+            font-size: 1.4rem;
+        }
+
+        p {
+            margin-bottom: 1rem;
+            color: var(--text-secondary);
+        }
+
+        ul {
+            margin-left: 2rem;
+            color: var(--text-secondary);
+        }
+
+        ul li {
+            margin: 0.5rem 0;
+        }
+
+        /* Footer */
+        footer {
+            padding: 3rem 5%;
+            border-top: 1px solid var(--border);
+            text-align: center;
+            color: var(--text-secondary);
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .hero h1 {
+                font-size: 2rem;
+            }
+
+            .two-col {
+                grid-template-columns: 1fr;
+            }
+
+            .section-title {
+                font-size: 1.6rem;
+            }
+
+            .hero-stats {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav>
+        <div class="container">
+            <a href="index.html" class="logo">Δ DELTA</a>
+            <div style="display: flex; align-items: center;">
+                <a href="index.html">Trading</a>
+                <a href="algorithm.html">Algorithm</a>
+                <a href="gallery.html">Records</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="container">
+            <h1>MR-EXP v2.4</h1>
+            <p class="subtitle">Cross-Chain Order Flow Imbalance Detection | Expiry-Day Gamma Specialist | Bare-Metal Execution</p>
+            
+            <div class="hero-stats">
+                <div class="stat-box">
+                    <div class="stat-value">80.4%</div>
+                    <div class="stat-label">Win Rate</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-value">5.35×</div>
+                    <div class="stat-label">Profit Factor</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-value">14.47</div>
+                    <div class="stat-label">Sharpe Ratio (Cum)</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-value">258.93</div>
+                    <div class="stat-label">Calmar Ratio (Cum)</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Core Strategy -->
+    <section class="content-section">
+        <div class="container">
+            <h2 class="section-title">
+                <span class="section-icon">📊</span>
+                Core Strategy: Order Flow Imbalance Detection
+            </h2>
+            <p class="section-subtitle">Monitoring 240 real-time streams across global capital flows to detect market imbalance before price discovery</p>
+
+            <div class="two-col">
+                <div>
+                    <h3>The Trading Thesis</h3>
+                    <p>On expiry days, when options lose value rapidly, every small index move creates explosive reactions in option prices. The algorithm monitors cross-chain order flow imbalance across 240 real-time streams. When buy or sell pressure becomes extreme—and this imbalance is confirmed across all three indices (NIFTY, SENSEX, BANKNIFTY) simultaneously—the algo takes the opposite trade, targeting a mean-reversion snapback.</p>
+                    
+                    <h3>What is Order Flow Imbalance?</h3>
+                    <p>Order Flow Imbalance (OFI) occurs when the volume of buy orders significantly exceeds sell orders—or vice versa. When this imbalance becomes extreme, it signals one side has overextended. The market must adjust to match global pressure, causing prices to snap back in the opposite direction.</p>
+
+                    <h3>Why 240 Streams?</h3>
+                    <p>Reading across NIFTY, SENSEX, and BANKNIFTY simultaneously removes false signals caused by instrument-specific noise. When the imbalance pattern aligns across all three chains, conviction is highest and the trade is entered on the nearest expiry. This cross-chain confirmation separates real moves from noise.</p>
+
+                    <div class="callout">
+                        <div class="callout-title">240 Hidden Cameras Inside Global Banks</div>
+                        <p>While you're waiting for the Nifty chart to move, the algo is watching actual capital being moved into the system across 240 global data streams. It trades the imbalance of the world's capital right before it hits Mumbai.</p>
+                    </div>
+                </div>
+
+                <div>
+                    <h3>Key Execution Metrics</h3>
+                    
+                    <table class="comparison-table">
+                        <tr>
+                            <th>Parameter</th>
+                            <th>Value</th>
+                        </tr>
+                        <tr>
+                            <td><strong>Live data streams</strong></td>
+                            <td><span class="card-value">240</span></td>
+                        </tr>
+                        <tr>
+                            <td><strong>Scan interval</strong></td>
+                            <td><span class="card-value">Every 10ms</span></td>
+                        </tr>
+                        <tr>
+                            <td><strong>Strikes monitored</strong></td>
+                            <td><span class="card-value">20 above & below ATM (CE + PE)</span></td>
+                        </tr>
+                        <tr>
+                            <td><strong>Order latency</strong></td>
+                            <td><span class="card-value">&lt; 5ms post-signal</span></td>
+                        </tr>
+                        <tr>
+                            <td><strong>Minimum participation</strong></td>
+                            <td><span class="card-value">₹10 Lakhs</span></td>
+                        </tr>
+                        <tr>
+                            <td><strong>Active margin per trade</strong></td>
+                            <td><span class="card-value">10% of portfolio</span></td>
+                        </tr>
+                        <tr>
+                            <td><strong>Signal validation</strong></td>
+                            <td><span class="card-value">Multi-tick confirmation</span></td>
+                        </tr>
+                        <tr>
+                            <td><strong>Trading days</strong></td>
+                            <td><span class="card-value">Tue (NIFTY), Thu (SENSEX)</span></td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- The Edge -->
+    <section class="content-section">
+        <div class="container">
+            <h2 class="section-title">
+                <span class="section-icon">⚡</span>
+                The Structural Advantage
+            </h2>
+            <p class="section-subtitle">How we see information 500ms before it appears on any chart</p>
+
+            <div class="card-grid">
+                <div class="card">
+                    <div class="card-title">The Microscope</div>
+                    <div class="card-content">
+                        A normal trader watches 1–5 minute candles. By the time the candle turns green, you're already reacting to something that happened 2–5 seconds ago.
+                        <br><br>
+                        This algo operates at <span class="card-value">market microstructure level</span> — 240 stream updates every second. It detects the global imbalance tipping point and places the order <span class="card-value">before the move shows up on any chart</span>.
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-title">The Compass</div>
+                    <div class="card-content">
+                        On expiry day, the NSE chart is riddled with fakeouts — moves that look real on your 1-minute chart but reverse immediately.
+                        <br><br>
+                        The cross-chain order flow acts as a compass. A fakeout on NSE shows as isolated — global streams don't confirm it. A <span class="card-value">real move shows 200+ streams aligned</span>.
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-title">Global Leading Indicator</div>
+                    <div class="card-content">
+                        The Indian market is a consumer of global risk. FII flows into NIFTY and BANKNIFTY are never random — they react to shifts in global interest rates, currency volatility, and equity sentiment.
+                        <br><br>
+                        By monitoring 240 streams, the algo detects <span class="card-value">"Macro-Tectonic" shifts</span> in real-time before they're priced into Indian premiums.
+                    </div>
+                </div>
+            </div>
+
+            <div class="callout">
+                <div class="callout-title">Speed Advantage</div>
+                <p><strong>Normal trader:</strong> 2–5 seconds lag (waiting for candle to form)<br>
+                <strong>This algo:</strong> &lt;500ms entry (before candle forms)</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Infrastructure -->
+    <section class="content-section">
+        <div class="container">
+            <h2 class="section-title">
+                <span class="section-icon">🔧</span>
+                Infrastructure & Technology
+            </h2>
+            <p class="section-subtitle">Why latency matters. Why bare-metal matters.</p>
+
+            <div class="card-grid">
+                <div class="card">
+                    <div class="card-title">96 Physical CPU Cores</div>
+                    <div class="card-content">
+                        AWS m7i.metal-24xl bare-metal instance in Mumbai (ap-south-1). Direct access to 96 physical cores and 384GB RAM — zero virtualisation. Eliminates "noisy neighbour" latency spikes.
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-title">240 Parallel Streams</div>
+                    <div class="card-content">
+                        All 240 global streams processed via high-performance ENA Express network adapters. Data packets bypass standard OS bottlenecks and reach the decision engine in <span class="card-value">microseconds</span> — not milliseconds.
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-title">Deterministic Execution</div>
+                    <div class="card-content">
+                        The algorithm core is "pinned" to specific physical CPU cores. Signal detection to order execution time is perfectly consistent — even during peak expiry volatility. No jitter.
+                    </div>
+                </div>
+            </div>
+
+            <h3>Infrastructure Cost</h3>
+            <div class="code-block">
+Bare-Metal Compute:           $4,500 – $5,500 USD/month
+Networking & Egress:          $200 – $500 USD/month
+Enterprise Support (24/7):    $500 USD/month
+
+Total Monthly Cost:           ~$5,200 – $6,500 USD
+                              ≈ ₹4.3L – ₹5.4L INR
+
+This is a FIXED operational cost — regardless of trades
+or profits generated, cost is predictable and does not
+scale with portfolio size.
+            </div>
+
+            <h3>Why Bare-Metal, Not Regular Cloud?</h3>
+            <table class="comparison-table">
+                <tr>
+                    <th>Approach</th>
+                    <th>Problem</th>
+                    <th>Our Solution</th>
+                </tr>
+                <tr>
+                    <td>Standard AWS EC2</td>
+                    <td>Shared CPU — latency spikes during load</td>
+                    <td>Bare-metal — dedicated silicon, zero shared resources</td>
+                </tr>
+                <tr>
+                    <td>Virtualisation</td>
+                    <td>Adds 1–10ms unpredictable delay</td>
+                    <td>Core pinning — signal engine always on same CPU core</td>
+                </tr>
+                <tr>
+                    <td>Standard networking</td>
+                    <td>Kernel bottleneck for high-frequency data</td>
+                    <td>ENA Express network — kernel bypass, data in microseconds</td>
+                </tr>
+            </table>
+
+            <p style="margin-top: 2rem;"><strong>The Structural Advantage:</strong> The combination of wide-spectrum cross-chain monitoring (240 streams) and local bare-metal colocation in Mumbai creates a structural speed advantage that cannot be replicated on standard cloud or retail brokerage infrastructure. We are trading the information lag between the global digital economy and the Indian derivatives market.</p>
+        </div>
+    </section>
+
+    <!-- Global Streams -->
+    <section class="content-section">
+        <div class="container">
+            <h2 class="section-title">
+                <span class="section-icon">🌍</span>
+                240 Global Macro Streams
+            </h2>
+            <p class="section-subtitle">Class I: Global Equities (100) | Class II: Fixed Income (80) | Class III: Commodities (60)</p>
+
+            <div class="card-grid">
+                <div class="card">
+                    <div class="card-title">Class I: 100 Global Equity Streams</div>
+                    <div class="card-content">
+                        <strong>The Leading Edge:</strong> Real-time L2 order flow for S&P 500 (ES), Nasdaq 100 (NQ), and GIFT Nifty — the premarket signal that moves Indian indices at 9:15 AM.
+                        <br><br>
+                        <strong>Sector Correlation:</strong> Top 20 global mega-caps (NVIDIA, JPMorgan, etc.) as sector proxies for Tech & Finance — directly correlated to their Indian counterparts.
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-title">Class II: 80 Fixed Income Streams</div>
+                    <div class="card-content">
+                        <strong>The FII Compass:</strong> Live feeds for US 10-Year & 2-Year Treasuries — the most critical predictors of FII entries and exits from Indian markets.
+                        <br><br>
+                        <strong>Sovereign Spreads:</strong> US vs Japan (JGB) vs Germany (Bund) — identifies global liquidity tightening before it hits Indian flows.
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-title">Class III: 60 Commodity Streams</div>
+                    <div class="card-content">
+                        <strong>Energy & Input Costs:</strong> Brent Crude & WTI with ultra-low latency feeds. India's oil-import dependency makes these primary leading indicators for Bank Nifty volatility.
+                        <br><br>
+                        <strong>Safe Haven Flows:</strong> Dollar Index (DXY) & Gold — measure defensive repositioning before it triggers INR and index moves.
+                    </div>
+                </div>
+            </div>
+
+            <div class="callout">
+                <div class="callout-title">Stream-to-Core Architecture</div>
+                <p><strong>80 Physical CPU Cores × 3 Streams Per Core = 240 Total Dedicated Stream Observations</strong>
+                <br><br>
+                To guarantee zero jitter, each stream is mapped to a dedicated physical CPU core on the bare-metal server. A Brent Crude update never competes for resources with a US Treasury feed — they run in strict isolation.
+                <br><br>
+                OFI aggregation time: Sub-millisecond across all 240 streams</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Trading Calendar & Protocol -->
+    <section class="content-section">
+        <div class="container">
+            <h2 class="section-title">
+                <span class="section-icon">📅</span>
+                Weekly Trading Calendar & Protocol
+            </h2>
+            <p class="section-subtitle">Primary expiry days: Tuesday & Thursday. Bonus income: Mon, Wed, Fri</p>
+
+            <div class="process-flow">
+                <div class="process-step" data-step="Mon">
+                    <h4>Monday</h4>
+                    <p><strong>STANDARD</strong><br>Opportunistic non-expiry trades</p>
+                </div>
+                <div class="process-step" data-step="Tue">
+                    <h4>Tuesday ★</h4>
+                    <p><strong>PRIMARY</strong><br>NIFTY 50 Expiry (NSE)<br>10–20% returns</p>
+                </div>
+                <div class="process-step" data-step="Wed">
+                    <h4>Wednesday</h4>
+                    <p><strong>STANDARD</strong><br>Opportunistic non-expiry trades</p>
+                </div>
+                <div class="process-step" data-step="Thu">
+                    <h4>Thursday ★</h4>
+                    <p><strong>PRIMARY</strong><br>SENSEX Expiry (BSE)<br>10–20% returns</p>
+                </div>
+                <div class="process-step" data-step="Fri">
+                    <h4>Friday</h4>
+                    <p><strong>STANDARD</strong><br>Opportunistic non-expiry trades</p>
+                </div>
+            </div>
+
+            <h3>Expiry vs Non-Expiry Returns</h3>
+            <table class="comparison-table">
+                <tr>
+                    <th>Metric</th>
+                    <th>Expiry Days (Tue & Thu)</th>
+                    <th>Non-Expiry Days (Mon, Wed, Fri)</th>
+                </tr>
+                <tr>
+                    <td><strong>Typical portfolio return</strong></td>
+                    <td><span class="card-value">10–20% per session</span></td>
+                    <td><span class="card-value">~2% of total capital</span></td>
+                </tr>
+                <tr>
+                    <td><strong>Average session return</strong></td>
+                    <td>15% of portfolio value</td>
+                    <td>~20% on active capital (10% deployed)</td>
+                </tr>
+                <tr>
+                    <td><strong>What drives returns</strong></td>
+                    <td>Gamma explosion on expiring options</td>
+                    <td>Market calmer — options move less</td>
+                </tr>
+                <tr>
+                    <td><strong>Trades per session</strong></td>
+                    <td>1–3 setups</td>
+                    <td>Supplementary bonus only</td>
+                </tr>
+            </table>
+
+            <h3>Time-Based Option Selection (Expiry Day)</h3>
+            <div class="card-grid">
+                <div class="card">
+                    <div class="card-title">Before 2:00 PM</div>
+                    <div class="card-content">
+                        <strong>Out of the Money (OTM) Options</strong>
+                        <br><br>
+                        OTM options are cheap but highly reactive. When the market makes a sharp move, these can multiply several times in minutes.
+                        <br><br>
+                        <strong>Goal:</strong> Catch big spikes and exit fast with large profits
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-title">After 2:00 PM</div>
+                    <div class="card-content">
+                        <strong>In the Money / ATM Options</strong>
+                        <br><br>
+                        In final hours, cheap OTM options become a gamble. The algo switches to ITM or ATM options which retain value at settlement.
+                        <br><br>
+                        <strong>Goal:</strong> Stay protected, ensure recoverable value
+                    </div>
+                </div>
+            </div>
+
+            <div class="callout warning">
+                <div class="callout-title">Bank Nifty Monthly Exception</div>
+                <p>Bank Nifty monthly expiry falls on the last Thursday of each month. On that Thursday, the algo trades Bank Nifty instead of Sensex as it carries the nearest expiry and most aggressive price action of that cycle.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Performance Metrics -->
+    <section class="content-section">
+        <div class="container">
+            <h2 class="section-title">
+                <span class="section-icon">📈</span>
+                Key Performance Metrics
+            </h2>
+            <p class="section-subtitle">Live performance observed across 240+ expiry sessions</p>
+
+            <h3 style="margin-top: 2rem;">📈 Algo Portfolio Ratios (Cumulative)</h3>
+            <div class="metrics-grid">
+                <div class="metric">
+                    <div class="metric-value">14.47</div>
+                    <div class="metric-label">Sharpe Ratio (Cum)</div>
+                </div>
+                <div class="metric">
+                    <div class="metric-value">120.65</div>
+                    <div class="metric-label">Sortino Ratio (Cum)</div>
+                </div>
+                <div class="metric">
+                    <div class="metric-value">258.93</div>
+                    <div class="metric-label">Calmar Ratio (Cum)</div>
+                </div>
+                <div class="metric">
+                    <div class="metric-value">5.35×</div>
+                    <div class="metric-label">Profit Factor</div>
+                </div>
+            </div>
+
+            <h3 style="margin-top: 2rem;">📊 Algo Performance (Cumulative)</h3>
+            <div class="metrics-grid">
+                <div class="metric">
+                    <div class="metric-value">80.4%</div>
+                    <div class="metric-label">Win Rate</div>
+                </div>
+                <div class="metric">
+                    <div class="metric-value">41:10</div>
+                    <div class="metric-label">Wins : Losses</div>
+                </div>
+                <div class="metric">
+                    <div class="metric-value">862.61%</div>
+                    <div class="metric-label">Avg Profit %</div>
+                </div>
+                <div class="metric">
+                    <div class="metric-value">₹15,263.71</div>
+                    <div class="metric-label">Max Drawdown</div>
+                </div>
+            </div>
+
+            <h3>Understanding the Metrics</h3>
+            <div class="card-grid">
+                <div class="card">
+                    <div class="card-title">Win Rate: 80.4%</div>
+                    <div class="card-content">4 out of every 5 trades end profitably (41 wins in 51 total trades). This consistency significantly exceeds typical algorithmic trading benchmarks of 55–60%.</div>
+                </div>
+
+                <div class="card">
+                    <div class="card-title">Profit Factor: 5.35×</div>
+                    <div class="card-content">For every ₹1 lost, the strategy earns ₹5.35 in profit. Professional systems above 2.0 are excellent. This is 2.7× that benchmark, indicating strong edge.</div>
+                </div>
+
+                <div class="card">
+                    <div class="card-title">Win:Loss Ratio: 41:10</div>
+                    <div class="card-content">41 winning trades vs 10 losing trades across cumulative performance. The asymmetry strongly favors profitable outcomes, demonstrating strategy consistency.</div>
+                </div>
+
+                <div class="card">
+                    <div class="card-title">Sharpe Ratio: 14.47</div>
+                    <div class="card-content">Cumulative return relative to total volatility. Above 1.0 is good; above 2.0 is excellent. At 14.47, risk-adjusted returns are exceptional for algorithmic strategies.</div>
+                </div>
+
+                <div class="card">
+                    <div class="card-title">Sortino Ratio: 120.65</div>
+                    <div class="card-content">Cumulative return relative to downside risk only. Measures only "bad" volatility — more conservative than Sharpe. 120.65 indicates minimal downside variation relative to returns.</div>
+                </div>
+
+                <div class="card">
+                    <div class="card-title">Calmar Ratio: 258.93</div>
+                    <div class="card-content">Return relative to maximum drawdown. At 258.93, this indicates exceptional return generation with minimal capital drawdown. Institutional-grade metric.</div>
+                </div>
+
+                <div class="card">
+                    <div class="card-title">Avg Profit: 862.61%</div>
+                    <div class="card-content">Average profit percentage per winning trade. Reflects the strategy's ability to capture explosive gamma moves on expiry days.</div>
+                </div>
+
+                <div class="card">
+                    <div class="card-title">Max Drawdown: ₹15,263.71</div>
+                    <div class="card-content">Maximum peak-to-trough decline observed. Absolute rupee amount shows the largest capital loss during the cumulative performance period.</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Risk Framework -->
+    <section class="content-section">
+        <div class="container">
+            <h2 class="section-title">
+                <span class="section-icon">🛡️</span>
+                Risk Architecture
+            </h2>
+            <p class="section-subtitle">Hard stops and circuit breakers protect capital</p>
+
+            <div class="card-grid">
+                <div class="card">
+                    <div class="card-title">Max Daily Loss</div>
+                    <div class="card-content">
+                        <span class="card-value">9% Hard Ceiling</span>
+                        <br>
+                        3 consecutive stop-losses × 3% each = halt for the day. System waits for next trading session.
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-title">Per-Trade Risk</div>
+                    <div class="card-content">
+                        <span class="card-value">10% of Portfolio</span>
+                        <br>
+                        Only 10% deployed per trade. Rest sits in overnight liquid debt funds earning returns.
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-title">Stop-Loss per Trade</div>
+                    <div class="card-content">
+                        <span class="card-value">30% on Deployed Margin</span>
+                        <br>
+                        Maximum loss on deployed capital. Market order at signal = automatic execution.
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-title">Profit Target</div>
+                    <div class="card-content">
+                        <span class="card-value">100% on Deployed Margin</span>
+                        <br>
+                        Double the margin deployed. Triggers auto-exit. Takes profit and resets for next setup.
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-title">Worst-Case Scenario</div>
+                    <div class="card-content">
+                        <span class="card-value">67.75% Max Drawdown</span>
+                        <br>
+                        If all 12 losses occur consecutively. Theoretical maximum. In practice, distribution is even.
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-title">Expected Drawdowns</div>
+                    <div class="card-content">
+                        <span class="card-value">6–7 per Year</span>
+                        <br>
+                        Average drawdown events annually. Normal variance in strategy returns.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Capital Structure -->
+    <section class="content-section">
+        <div class="container">
+            <h2 class="section-title">
+                <span class="section-icon">💰</span>
+                Capital Structure & Deployment
+            </h2>
+
+            <div class="two-col">
+                <div>
+                    <h3>Minimum Participation: ₹10 Lakhs</h3>
+                    
+                    <table class="comparison-table">
+                        <tr>
+                            <th>Component</th>
+                            <th>Amount</th>
+                            <th>Purpose</th>
+                        </tr>
+                        <tr>
+                            <td><strong>Cash Reserve</strong></td>
+                            <td>₹1 Lakh (10%)</td>
+                            <td>Operational liquidity</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Invested Capital</strong></td>
+                            <td>₹9 Lakhs (90%)</td>
+                            <td>Pledged for margin</td>
+                        </tr>
+                    </table>
+
+                    <h3>The ₹9L Deployment Model</h3>
+                    <p>₹9 Lakhs are placed in <strong>Overnight Liquid Debt Funds</strong> which are pledged to your broker (Kotak Neo) to generate trading margin. Benefits:</p>
+                    <ul>
+                        <li>✓ Capital continues earning overnight returns (5-7% annualized)</li>
+                        <li>✓ Fully liquid — can be un-pledged anytime</li>
+                        <li>✓ Generates margin for trading (typically 2:1 to 4:1)</li>
+                        <li>✓ Zero "idle capital" problem</li>
+                    </ul>
+                </div>
+
+                <div>
+                    <h3>Capital Deployment Per Trade</h3>
+                    
+                    <div class="code-block">
+Total Portfolio:       ₹10,00,000 (100%)
+├─ Cash Buffer:       ₹1,00,000 (10%)
+└─ Active Margin:     ₹9,00,000 (90%)
+
+Per Trade:
+├─ Capital Deployed:  ₹1,00,000 (10% of portfolio)
+├─ Target Return:     ₹1,00,000 (100% on deployed)
+├─ After Fee (30%):   ₹70,000 net gain
+└─ Net Portfolio Gain: ~7% per win
+                    </div>
+
+                    <h3>Why 10% Per Trade?</h3>
+                    <p>By deploying only 10% per trade but targeting 100% return on that slice, the strategy operates like a high-velocity capital cycle. The remaining 90% is never idle — it earns overnight returns while pledged as margin collateral.</p>
+
+                    <div class="callout">
+                        <div class="callout-title">Daily Profit Cap</div>
+                        <p><span class="card-value">₹15L per expiry session</span> — regardless of portfolio size. Ensures positions remain within the liquidity depth of Indian index options markets.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Fees & Onboarding -->
+    <section class="content-section">
+        <div class="container">
+            <h2 class="section-title">
+                <span class="section-icon">💳</span>
+                Fees & Onboarding
+            </h2>
+
+            <div class="card-grid">
+                <div class="card">
+                    <div class="card-title">Account Setup Fee</div>
+                    <div class="card-content">
+                        <span class="card-value">₹1,00,000</span>
+                        <br><br>
+                        One-time, non-refundable. Covers system onboarding, API configuration, infrastructure provisioning, initial risk profiling.
+                        <br><br>
+                        <strong>Referral Waiver:</strong> Clients referred by existing clients have fee waived in full.
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-title">Performance Fee</div>
+                    <div class="card-content">
+                        <span class="card-value">30% Standard</span><br>
+                        <span class="card-value">25% After 6 Months</span>
+                        <br><br>
+                        Per profitable expiry day only. High-water mark accounting. Settled at market close.
+                        <br><br>
+                        Only days with profits are charged.
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-title">Onboarding (4 Steps)</div>
+                    <div class="card-content">
+                        1. Open dedicated Kotak Neo account (API enabled)<br>
+                        2. Fund with minimum ₹10L<br>
+                        3. Execute Power of Attorney<br>
+                        4. Video onboarding & API verification
+                        <br><br>
+                        Process takes ~3–5 business days.
+                    </div>
+                </div>
+            </div>
+
+            <div class="callout warning">
+                <div class="callout-title">⚠️ Critical Account Rule</div>
+                <p>This account must be used <strong>exclusively for algorithm execution</strong>. Any personal trades placed manually in this account — including equity, F&O, or any other instrument — will corrupt the algorithm's position tracking, margin calculations, and risk models.</p>
+                <p>Such interference can result in severe losses far exceeding the strategy's normal risk parameters. If you wish to trade personally, you must open a separate brokerage account.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Risk Disclaimer -->
+    <section class="content-section">
+        <div class="container">
+            <h2 class="section-title">
+                <span class="section-icon">⚠️</span>
+                Risk Disclosure
+            </h2>
+
+            <div class="callout warning">
+                <div class="callout-title">Trading Derivatives Involves Substantial Risk</div>
+                <p><strong>Options trading is very risky and can result in a loss of your entire capital in a single day.</strong></p>
+                <p>Past performance is not indicative of future results. The strategy described herein is not SEBI-registered investment advice. Returns stated are based on historical observations and are not guaranteed. Capital invested may be partially or wholly lost.</p>
+                <p>This service is only for qualified investors who understand the risk of such an investment trading strategy.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+        <p>&copy; 2026 Delta Trading. All rights reserved. | SEBI Compliant | NSE/BSE Regulated</p>
+        <p style="margin-top: 1rem; font-size: 0.85rem;">MR-EXP v2.4 Strategy Memorandum — Confidential | For Qualified Investors Only</p>
+    </footer>
+
+    <script>
+        // Smooth scroll for navigation
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                const href = this.getAttribute('href');
+                if (href !== '#' && document.querySelector(href)) {
+                    e.preventDefault();
+                    document.querySelector(href).scrollIntoView({
+                        behavior: 'smooth'
+                    });
+                }
+            });
+        });
+    </script>
+</body>
+</html>
