@@ -411,6 +411,7 @@
             }
         }
     </style>
+    <script src="config.js"></script>
 </head>
 <body>
     <!-- Navigation -->
@@ -433,19 +434,19 @@
             
             <div class="hero-stats">
                 <div class="stat-box">
-                    <div class="stat-value">80.4%</div>
+                    <div class="stat-value" data-metric="heroStats.winRate">80.4%</div>
                     <div class="stat-label">Win Rate</div>
                 </div>
                 <div class="stat-box">
-                    <div class="stat-value">5.35×</div>
+                    <div class="stat-value" data-metric="heroStats.profitFactor">5.35×</div>
                     <div class="stat-label">Profit Factor</div>
                 </div>
                 <div class="stat-box">
-                    <div class="stat-value">14.47</div>
+                    <div class="stat-value" data-metric="heroStats.sharpeRatio">14.47</div>
                     <div class="stat-label">Sharpe Ratio (Cum)</div>
                 </div>
                 <div class="stat-box">
-                    <div class="stat-value">258.93</div>
+                    <div class="stat-value" data-metric="heroStats.calmarRatio">258.93</div>
                     <div class="stat-label">Calmar Ratio (Cum)</div>
                 </div>
             </div>
@@ -798,19 +799,19 @@ scale with portfolio size.
             <h3 style="margin-top: 2rem;">📈 Algo Portfolio Ratios (Cumulative)</h3>
             <div class="metrics-grid">
                 <div class="metric">
-                    <div class="metric-value">14.47</div>
+                    <div class="metric-value" data-metric="ratios.sharpe">14.47</div>
                     <div class="metric-label">Sharpe Ratio (Cum)</div>
                 </div>
                 <div class="metric">
-                    <div class="metric-value">120.65</div>
+                    <div class="metric-value" data-metric="ratios.sortino">120.65</div>
                     <div class="metric-label">Sortino Ratio (Cum)</div>
                 </div>
                 <div class="metric">
-                    <div class="metric-value">258.93</div>
+                    <div class="metric-value" data-metric="ratios.calmar">258.93</div>
                     <div class="metric-label">Calmar Ratio (Cum)</div>
                 </div>
                 <div class="metric">
-                    <div class="metric-value">5.35×</div>
+                    <div class="metric-value" data-metric="ratios.profitFactor">5.35×</div>
                     <div class="metric-label">Profit Factor</div>
                 </div>
             </div>
@@ -818,19 +819,19 @@ scale with portfolio size.
             <h3 style="margin-top: 2rem;">📊 Algo Performance (Cumulative)</h3>
             <div class="metrics-grid">
                 <div class="metric">
-                    <div class="metric-value">80.4%</div>
+                    <div class="metric-value" data-metric="performance.winRate">80.4%</div>
                     <div class="metric-label">Win Rate</div>
                 </div>
                 <div class="metric">
-                    <div class="metric-value">41:10</div>
+                    <div class="metric-value" data-metric="performance.winLossRatio">41:10</div>
                     <div class="metric-label">Wins : Losses</div>
                 </div>
                 <div class="metric">
-                    <div class="metric-value">862.61%</div>
+                    <div class="metric-value" data-metric="performance.avgProfitPercent">862.61%</div>
                     <div class="metric-label">Avg Profit %</div>
                 </div>
                 <div class="metric">
-                    <div class="metric-value">₹15,263.71</div>
+                    <div class="metric-value" data-metric="performance.maxDrawdown">₹15,263.71</div>
                     <div class="metric-label">Max Drawdown</div>
                 </div>
             </div>
